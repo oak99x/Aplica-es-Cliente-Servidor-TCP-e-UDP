@@ -45,7 +45,7 @@ def remover(nome, conexao):
         conexao.close()
 
 def main():
-    host = 'localhost'  # Endereço do servidor
+    host = "0.0.0.0"  # Ouça em todas as interfaces disponíveis
     port = 8080       # Porta do servidor
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
