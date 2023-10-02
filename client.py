@@ -13,7 +13,7 @@ def enviar_mensagem(client_socket):
 
 def main():
     host = 'localhost'  # Endereço do servidor
-    port = 8080       # Porta do servidor
+    port = 8080         # Porta do servidor
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((host, port))

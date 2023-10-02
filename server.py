@@ -15,6 +15,7 @@ def lidar_com_cliente(cliente):
     nome, conexao = cliente
     clientes[nome] = conexao
     print(nome + " conectou-se ao servidor.")
+    conexao.send(f"{nome} conectou-se do servidor.".encode('utf-8'))
     
     while True:
         try:
@@ -31,7 +32,9 @@ def lidar_com_cliente(cliente):
                         conexao.send("Usuário não encontrado.".encode('utf-8'))
                 elif mensagem.startswith('/MSG'):
                     mensagem_broadcast = f"[{nome}]: {mensagem[5:]}"
-                    broadcast(mensagem_broadcast.encode('utf-8'), conexao)
+                    broadcast(mensagem_broadcast.encode('utf-8'), nome)
+                elif mensagem.startswith('/EXIT'):
+                    remover(nome, conexao)
                 else:
                     conexao.send("Comando inválido.".encode('utf-8'))
         except:
@@ -42,6 +45,7 @@ def remover(nome, conexao):
     if nome in clientes:
         print(nome + " desconectou-se do servidor.")
         del clientes[nome]
+        conexao.send("{nome} desconectou-se do servidor.".encode('utf-8'))
         conexao.close()
 
 def main():
@@ -57,6 +61,7 @@ def main():
     while True:
         cliente, endereco = server_socket.accept()
         nome = cliente.recv(1024).decode('utf-8')
+        #cliente_info = (endereco[0], cliente)  # Armazenar o ip e a conexão do cliente
         cliente_info = (nome, cliente)  # Armazenar o nome e a conexão do cliente
         thread_cliente = threading.Thread(target=lidar_com_cliente, args=(cliente_info,))
         thread_cliente.start()
