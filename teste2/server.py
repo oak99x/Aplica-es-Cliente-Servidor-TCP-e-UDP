@@ -2,69 +2,81 @@ import socket
 import threading
 
 clientes = {}
-mensagens = []
 
 def broadcast(mensagem, cliente):
-    for nome, conexao in clientes.items():
-        if nome == cliente: #****** !=
-            try:
-                conexao.send(mensagem)
-            except:
-                remover(nome, conexao)
+    for nome, conexoes in clientes.items():
+        # if cliente in conexoes:
+        #     continue
 
-def remover(nome, conexao):
+        try:
+            conexoes[0].send(mensagem)
+        except:
+            pass
+            
+
+def remover(nome, cliente):
     if nome in clientes:
-        print(nome + " desconectou-se do servidor.") # print no servidor
-        broadcast(f"{nome} saiu do chat.".encode('utf-8'), nome) # print para todos clientes
-        del clientes[nome]
-        conexao.close()
+        print(nome + " desconectou-se do servidor.")
+        broadcast(f"{nome} desconectou-se do chat.".encode('utf-8'), cliente)
+        clientes[nome].remove(cliente)
+        if not clientes[nome]:
+            del clientes[nome]
 
-def lidar_com_cliente(cliente, controle):
-    nome, conexao = cliente
-    clientes[nome] = conexao
-    print(nome + " conectou-se ao servidor.") # print servidor
-    broadcast(f"{nome} conectou-se ao servidor.".encode('utf-8'), nome) # print para todos clientes
+def lidar_com_cliente(cliente):
+
+    nome, conexao_data, conexao_control = cliente
+
+    if nome not in clientes:
+        clientes[nome] = [conexao_data, conexao_control]
+        print(nome + " conectou-se ao servidor.") #print no servidor
+        conexao_data.send("Voce conectou-se ao servidor.".encode('utf-8')) #print para o cliente
+        broadcast(f"{nome} conectou-se ao chat.".encode('utf-8'), conexao_data) #print para todos os clientes
+    else:
+        clientes[nome].append(conexao_data)
+        clientes[nome].append(conexao_control)
 
     while True:
         try:
-            if controle:
-                mensagem = conexao.recv(1024).decode('utf-8')
-                if mensagem:
-                    if mensagem.startswith('/EXIT'):
-                        nome_cliente = mensagem.split()[1]
-                        # print(f"{nome_cliente} saiu do chat.")
-                        # broadcast(f"{nome_cliente} saiu do chat.".encode('utf-8'), conexao)
-                        remover(nome_cliente, conexao)
+            mensagem_data = conexao_data.recv(1024).decode('utf-8')
+            mensagem_control = conexao_control.recv(1024).decode('utf-8')
+
+            if mensagem_data:
+                if mensagem_data.startswith('/MSG'):
+                    mensagem_broadcast = f"[{nome}]: {mensagem_data[5:]}"
+                    broadcast(mensagem_broadcast.encode('utf-8'), conexao_data)
+
+                elif mensagem_data.startswith('/PRIV'):
+                    partes = mensagem_data.split(' ')
+                    destinatario = partes[1]
+                    mensagem_privada = ' '.join(partes[2:])
+
+                    if destinatario in clientes:
+                        conexao_destinatario = clientes[destinatario][0]
+                        print(conexao_destinatario)
+                        print("----------------------------------------------")
+                        mensagem_privada = f"[PRIVADO de {nome}]: {mensagem_privada}".encode('utf-8')
+                        conexao_destinatario.send(mensagem_privada)
                     else:
-                        conexao.send("Comando de controle inválido.".encode('utf-8'))
-            else:
-                mensagem = conexao.recv(1024).decode('utf-8')
-                if mensagem:
-                    if mensagem.startswith('/MSG'):
-                        mensagem_broadcast = f"[{nome}]: {mensagem[5:]}".encode('utf-8')
-                        mensagens.append(mensagem_broadcast)
-                        broadcast(mensagem_broadcast, conexao)
-                    
-                    else:
-                        conexao.send("Comando inválido.".encode('utf-8'))
+                        conexao_data.send("Usuário não encontrado.".encode('utf-8'))
+                else:
+                    conexao_data.send("Comando inválido.".encode('utf-8'))
+            
+            elif mensagem_control:
+                if mensagem_control.startswith('/EXIT'):
+                    remover(nome, conexao_control)
+                else:
+                    conexao_data.send("Comando de controle inválido.".encode('utf-8'))
         except:
-            remover(nome, conexao)
+            # if nome in clientes:
+            #     clientes[nome].remove(conexao_data)
+            #     if not clientes[nome]:
+            #         remover(nome, conexao_data)
             break
 
-
-
-# Para manter controle e ordenação das mensagens no TCP
-# def enviar_mensagens(cliente):
-#     nome, conexao = cliente.accept()
-#     while True:
-#         if mensagens:
-#             mensagem = mensagens.pop(0)
-#             broadcast(mensagem, conexao)
-
 def main():
-    host = "0.0.0.0"  # Ouça em todas as interfaces disponíveis
-    port_data = 8080  # Porta para mensagens de chat
-    port_control = 8081  # Porta para mensagens de controle
+    host = "0.0.0.0"
+    port_data = 8080
+    port_control = 8081
 
     server_socket_data = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket_data.bind((host, port_data))
@@ -76,24 +88,14 @@ def main():
 
     print(f"Servidor de chat está ativo nas portas {port_data} (dados) e {port_control} (controle)")
 
-    # Para manter controle e ordenação das mensagens no TCP
-    # Inicie a thread para enviar mensagens para clientes
-    # thread_enviar = threading.Thread(target=enviar_mensagens, args=(server_socket_data,))
-    # thread_enviar.start()
-
     while True:
         cliente_data, endereco_data = server_socket_data.accept()
-        nome = cliente_data.recv(1024).decode('utf-8')
-        #cliente_info = (endereco[0], cliente)  # Armazenar o ip e a conexão do cliente
-        cliente_info = (nome, cliente_data)  # Armazenar o nome e a conexão do cliente
-        thread_cliente_data = threading.Thread(target=lidar_com_cliente, args=(cliente_info, False))
-        thread_cliente_data.start()
-
-        # Lidar com as mensagens de controle em uma thread separada
         cliente_control, endereco_control = server_socket_control.accept()
-        controle_info = (nome, cliente_control)
-        thread_cliente_control = threading.Thread(target=lidar_com_cliente, args=(controle_info, True))
-        thread_cliente_control.start()
+        nome = cliente_data.recv(1024).decode('utf-8')
+        cliente_info = (nome, cliente_data, cliente_control)
+
+        thread_cliente = threading.Thread(target=lidar_com_cliente, args=(cliente_info,))
+        thread_cliente.start()
 
 if __name__ == "__main__":
     main()
