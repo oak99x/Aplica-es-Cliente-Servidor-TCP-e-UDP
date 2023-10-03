@@ -27,13 +27,13 @@ def main():
     client_socket_control.send(nome.encode('utf-8'))
 
     # Inicie threads para receber e enviar mensagens
-    # thread_receber_control = threading.Thread(target=receber_mensagens, args=(client_socket_control,))
+    thread_receber_control = threading.Thread(target=receber_mensagens, args=(client_socket_control,))
     # tthread_enviar_control = threading.Thread(target=enviar_mensagem, args=(client_socket_control,))
 
     thread_receber = threading.Thread(target=receber_mensagens, args=(client_socket_data,))
     thread_enviar = threading.Thread(target=enviar_mensagem, args=(client_socket_data,))
     
-    # thread_receber_control.start()
+    thread_receber_control.start()
     # tthread_enviar_control.start()
 
     thread_receber.start()

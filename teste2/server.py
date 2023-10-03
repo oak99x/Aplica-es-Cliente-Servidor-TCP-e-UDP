@@ -16,10 +16,10 @@ def broadcast(mensagem, cliente):
 
 def remover(nome, cliente):
     if nome in clientes:
-        print(nome + " desconectou-se do servidor.")
-        broadcast(f"{nome} desconectou-se do chat.".encode('utf-8'), cliente)
-        clientes[nome].remove(cliente)
+        clientes[nome].remove(conexao_data)
         if not clientes[nome]:
+            print(nome + " desconectou-se do servidor.")
+            broadcast(f"{nome} desconectou-se do chat.".encode('utf-8'), conexao_data)
             del clientes[nome]
 
 def lidar_com_cliente(cliente):
@@ -38,7 +38,7 @@ def lidar_com_cliente(cliente):
     while True:
         try:
             mensagem_data = conexao_data.recv(1024).decode('utf-8')
-            mensagem_control = conexao_control.recv(1024).decode('utf-8')
+            # mensagem_control = conexao_control.recv(1024).decode('utf-8') #arrumar cliente para que fique enviando algo em branco
 
             if mensagem_data:
                 if mensagem_data.startswith('/MSG'):
@@ -52,8 +52,6 @@ def lidar_com_cliente(cliente):
 
                     if destinatario in clientes:
                         conexao_destinatario = clientes[destinatario][0]
-                        print(conexao_destinatario)
-                        print("----------------------------------------------")
                         mensagem_privada = f"[PRIVADO de {nome}]: {mensagem_privada}".encode('utf-8')
                         conexao_destinatario.send(mensagem_privada)
                     else:
@@ -64,13 +62,11 @@ def lidar_com_cliente(cliente):
             elif mensagem_control:
                 if mensagem_control.startswith('/EXIT'):
                     remover(nome, conexao_control)
+                    break  # Sair do loop quando o cliente se desconectar
                 else:
                     conexao_data.send("Comando de controle inválido.".encode('utf-8'))
         except:
-            # if nome in clientes:
-            #     clientes[nome].remove(conexao_data)
-            #     if not clientes[nome]:
-            #         remover(nome, conexao_data)
+            remover(nome, conexao_data)
             break
 
 def main():
