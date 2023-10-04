@@ -16,11 +16,13 @@ def broadcast(mensagem, cliente):
 
 def remover(nome, cliente):
     if nome in clientes:
-        clientes[nome].remove(conexao_data)
-        if not clientes[nome]:
-            print(nome + " desconectou-se do servidor.")
-            broadcast(f"{nome} desconectou-se do chat.".encode('utf-8'), conexao_data)
-            del clientes[nome]
+        clientes[nome][0].close()
+        clientes[nome][1].close()
+        del clientes[nome]
+        print(nome + " desconectou-se do servidor.")
+        broadcast(f"{nome} desconectou-se do chat.".encode('utf-8'), cliente)
+        
+            
 
 def lidar_com_cliente(cliente):
 
@@ -38,7 +40,7 @@ def lidar_com_cliente(cliente):
     while True:
         try:
             mensagem_data = conexao_data.recv(1024).decode('utf-8')
-            # mensagem_control = conexao_control.recv(1024).decode('utf-8') #arrumar cliente para que fique enviando algo em branco
+            mensagem_control = conexao_control.recv(1024).decode('utf-8') #arrumar cliente para que fique enviando algo em branco
 
             if mensagem_data:
                 if mensagem_data.startswith('/MSG'):
@@ -56,6 +58,9 @@ def lidar_com_cliente(cliente):
                         conexao_destinatario.send(mensagem_privada)
                     else:
                         conexao_data.send("Usuário não encontrado.".encode('utf-8'))
+                elif mensagem_data.startswith('/EXIT'):
+                    remover(nome, conexao_data)
+                    break  # Sair do loop quando o cliente se desconectar
                 else:
                     conexao_data.send("Comando inválido.".encode('utf-8'))
             
