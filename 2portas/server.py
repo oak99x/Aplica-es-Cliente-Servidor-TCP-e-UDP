@@ -5,9 +5,8 @@ clientes = {}
 
 def broadcast(mensagem, cliente):
     for nome, conexoes in clientes.items():
-        # if cliente in conexoes:
-        #     continue
-
+        if cliente in conexoes:
+            continue
         try:
             conexoes[0].send(mensagem)
         except:
