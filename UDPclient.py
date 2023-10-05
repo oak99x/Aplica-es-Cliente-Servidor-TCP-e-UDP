@@ -1,7 +1,7 @@
 import socket
 import threading
 
-host = '192.168.68.107'
+host = 'ip' # colocar IP do server aqui
 port = 8080
 
 
