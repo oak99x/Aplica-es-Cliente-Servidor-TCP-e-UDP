@@ -10,10 +10,16 @@ def receber_mensagens(client_socket):
         message = client_socket.recvfrom(1024)[0].decode('utf-8')
         print(message)
 
+        if message.startswith('--X--'):
+            print("Encerrando...")
+            client_socket.close()
+            exit(0)
+            
+
 def enviar_mensagem(client_socket):
 
     while True:
-        message = input()
+        message = input(">")
         client_socket.sendto(message.encode('utf-8'), (host, port))
 
 def main():
@@ -23,8 +29,6 @@ def main():
 
     nome = input("Digite seu nick: ")
     client_socket.sendto(nome.encode('utf-8'), (host, port))
-
-    message = input(" -> ")
 
     thread_receber = threading.Thread(target=receber_mensagens, args=(client_socket,))
     thread_enviar = threading.Thread(target=enviar_mensagem, args=(client_socket,))
