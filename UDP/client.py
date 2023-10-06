@@ -17,8 +17,8 @@ def enviar_mensagem(client_socket_data, client_socket_control, port_data, port_c
             mensagem = input()
             client_socket_data.sendto(mensagem.encode('utf-8'), (host, port_data))
             client_socket_control.sendto(mensagem.encode('utf-8'), (host, port_control))
-        except:
-            break
+        except Exception as e:
+                print("Ocorreu uma exceção:", e)
 
 def registrar_nome(client_socket, host, port_control):
     nome = input("Digite seu nome: ")
