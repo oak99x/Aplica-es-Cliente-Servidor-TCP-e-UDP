@@ -88,8 +88,7 @@ def main():
             cliente_control, endereco = server_socket_control.accept()
             
             cliente_info = (cliente_data, cliente_control, endereco)
-            for cliente, info_cliente in clientes.items():
-                print(cliente) 
+            
             if endereco not in clientes:
                 nick = cliente_data.recv(1024).decode('utf-8')
                 cliente_control.recv(1024).decode('utf-8') #limpa o cliente_control
