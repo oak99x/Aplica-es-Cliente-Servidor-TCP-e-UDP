@@ -72,20 +72,23 @@ def main():
     print(f"Servidor de chat está ativo nas portas {port_data} (dados) e {port_control} (controle)")
 
     while True:
-        mensagem_data, endereco = server_socket_data.recvfrom(1024)
-        mensagem_control, endereco = server_socket_control.recvfrom(1024)
+        try:
+            mensagem_data, endereco = server_socket_data.recvfrom(1024)
+            mensagem_control, endereco = server_socket_control.recvfrom(1024)
 
-        cliente_info = (mensagem_data, mensagem_control, endereco)
+            cliente_info = (mensagem_data, mensagem_control, endereco)
 
-        if endereco not in clientes:
-            nick = mensagem_data.decode('utf-8')
-            clientes[endereco] = nick
+            if endereco not in clientes:
+                nick = mensagem_data.decode('utf-8')
+                clientes[endereco] = nick
 
-            print(nick + " conectou-se ao servidor.")
-            server_socket_control.sendto("Voce conectou-se ao chat.".encode('utf-8'), endereco)
-            broadcast(f"{nick} conectou-se ao chat.".encode('utf-8'), endereco)
-        else:
-            lidar_com_cliente(cliente_info)
+                print(nick + " conectou-se ao servidor.")
+                server_socket_control.sendto("Voce conectou-se ao chat.".encode('utf-8'), endereco)
+                broadcast(f"{nick} conectou-se ao chat.".encode('utf-8'), endereco)
+            else:
+                lidar_com_cliente(cliente_info)
+        except Exception as e:
+            pass
 
 if __name__ == "__main__":
     main()
