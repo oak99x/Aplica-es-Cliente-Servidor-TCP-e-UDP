@@ -1,22 +1,24 @@
 import socket
 import threading
+import time
 
-def receber_mensagens(client_socket):
-    while True:
-        mensagem = client_socket.recv(1024).decode('utf-8')
-        if not mensagem:
-            # Quando o encerramento da aplicação é solicitado, feche as conexões
-            client_socket.close()
-            break
-        print(mensagem)
+def receber_mensagens(client_socket,stop_event):
+     while not stop_event.is_set():
+        try:
+            mensagem = client_socket.recv(1024).decode('utf-8')
+            print(mensagem)
+        except Exception as e:
+            pass
 
-def enviar_mensagem(client_socket_data, client_socket_control):
-    while True:
+def enviar_mensagem(client_socket_data, client_socket_control, stop_event):
+     while not stop_event.is_set():
         try:
             mensagem = input()
             client_socket_data.send(mensagem.encode('utf-8'))
             client_socket_control.send(mensagem.encode('utf-8'))
-        except:
+            if mensagem.lower() == '/exit':
+                stop_event.set()  # Sinalize para sair
+        except Exception as e:
             break
         
 def registrar_nome(client_socket_control):
@@ -40,18 +42,25 @@ def main():
     #registrar_nome(client_socket_control)
     print("Digite seu nome: ")
 
+    stop_event = threading.Event()  # Evento para sinalizar o encerramento
+
     # Inicie threads para receber e enviar mensagens
-    thread_receber_control = threading.Thread(target=receber_mensagens, args=(client_socket_control,))
-    thread_receber = threading.Thread(target=receber_mensagens, args=(client_socket_data,))
+    thread_receber_control = threading.Thread(target=receber_mensagens, args=(client_socket_control, stop_event))
+    thread_receber_data = threading.Thread(target=receber_mensagens, args=(client_socket_data, stop_event))
     
     thread_receber_control.start()
-    thread_receber.start()
+    thread_receber_data.start()
 
-    enviar_mensagem(client_socket_data, client_socket_control)
     
-    # Quando o envio de mensagens é encerrado, espere que as threads de recebimento terminem
-    thread_receber_control.join()
-    thread_receber.join()
+
+    enviar_mensagem(client_socket_data, client_socket_control, stop_event)
+    
+    # Aguarde até que a thread de envio sinalize o encerramento
+    stop_event.wait()
+
+    # Feche os sockets
+    client_socket_control.close()
+    client_socket_data.close()
 
 if __name__ == "__main__":
     main()
