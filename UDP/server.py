@@ -8,8 +8,8 @@ def broadcast(mensagem, cliente_enviador):
         if cliente != cliente_enviador:
             try:
                 server_socket_data.sendto(mensagem, cliente)
-            except:
-                print("erro")
+            except Exception as e:
+                print("Ocorreu uma exceção:", e)
 
 def remover(cliente):
     nome = clientes[cliente]
