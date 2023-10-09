@@ -64,6 +64,14 @@ def lidar_com_cliente(cliente):
                 # Se o destinatário não for encontrado, envia uma mensagem de erro para o remetente
                 server_socket_control.sendto("Usuário não encontrado.".encode('utf-8'), endereco)
 
+        elif mensagem_control.startswith('/LIST'):
+            # Se a mensagem comeca com '/LIST', exibe uma lista de usuarios conectados na sala
+            lista = "Usuários conectados:\n"
+            for cliente in clientes.items():
+                lista += f"{cliente[1]} \n"
+            lista += "--------"
+            server_socket_control.sendto(lista.encode('utf-8'), endereco)
+        
         elif mensagem_control.startswith('/EXIT'):
             # Se a mensagem de controle começa com '/EXIT', o cliente quer sair
             remover(endereco) # Chama a função para remover o cliente do servidor
